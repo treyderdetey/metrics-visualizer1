@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Мониторинг серверов</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .server-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+        }
+        .pulse {
+            animation: pulse 2s infinite;
+        }
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+        .gradient-bg {
+            background: linear-gradient(135deg, #1e3a8a 0%, #1e40af 100%);
+        }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <div class="min-h-screen">
+        <!-- Header -->
+        <header class="gradient-bg text-white shadow-lg">
+            <div class="container mx-auto px-4 py-6">
+                <div class="flex justify-between items-center">
+                    <div class="flex items-center space-x-4">
+                        <i class="fas fa-server text-3xl"></i>
+                        <h1 class="text-2xl font-bold">Мониторинг серверов</h1>
+                    </div>
+                    <div class="flex items-center space-x-4">
+                        <span class="text-sm">Обновлено: <span id="update-time">Только что</span></span>
+                        <button id="refresh-btn" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center">
+                            <i class="fas fa-sync-alt mr-2"></i> Обновить
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="container mx-auto px-4 py-8">
+            <!-- Summary Cards -->
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+                <div class="bg-white rounded-xl shadow-md p-6 flex items-center">
+                    <div class="bg-green-100 p-3 rounded-full mr-4">
+                        <i class="fas fa-check-circle text-green-600 text-xl"></i>
+                    </div>
+                    <div>
+                        <p class="text-gray-500 text-sm">Работающих серверов</p>
+                        <h3 class="text-2xl font-bold text-green-600">8</h3>
+                    </div>
+                </div>
+                <div class="bg-white rounded-xl shadow-md p-6 flex items-center">
+                    <div class="bg-red-100 p-3 rounded-full mr-4">
+                        <i class="fas fa-exclamation-circle text-red-600 text-xl"></i>
+                    </div>
+                    <div>
+                        <p class="text-gray-500 text-sm">Проблемных серверов</p>
+                        <h3 class="text-2xl font-bold text-red-600">2</h3>
+                    </div>
+                </div>
+                <div class="bg-white rounded-xl shadow-md p-6 flex items-center">
+                    <div class="bg-blue-100 p-3 rounded-full mr-4">
+                        <i class="fas fa-microchip text-blue-600 text-xl"></i>
+                    </div>
+                    <div>
+                        <p class="text-gray-500 text-sm">Средняя загрузка CPU</p>
+                        <h3 class="text-2xl font-bold text-blue-600">42%</h3>
+                    </div>
+                </div>
+                <div class="bg-white rounded-xl shadow-md p-6 flex items-center">
+                    <div class="bg-purple-100 p-3 rounded-full mr-4">
+                        <i class="fas fa-memory text-purple-600 text-xl"></i>
+                    </div>
+                    <div>
+                        <p class="text-gray-500 text-sm">Средняя загрузка RAM</p>
+                        <h3 class="text-2xl font-bold text-purple-600">68%</h3>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Server Status Grid -->
+            <div class="mb-8">
+                <h2 class="text-xl font-semibold mb-4 flex items-center">
+                    <i class="fas fa-network-wired mr-2 text-blue-600"></i> Состояние серверов
+                </h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <!-- Server Card 1 -->
+                    <div class="server-card bg-white rounded-xl shadow-md overflow-hidden transition-all duration-300">
+                        <div class="p-6">
+                            <div class="flex justify-between items-start mb-4">
+                                <div>
+                                    <h3 class="font-bold text-lg">Web-сервер #1</h3>
+                                    <p class="text-gray-500 text-sm">192.168.1.10</p>
+                                </div>
+                                <span class="bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full">Online</span>
+                            </div>
+                            <div class="flex justify-between mb-2">
+                                <span class="text-gray-600">CPU</span>
+                                <span class="font-medium">35%</span>
+                            </div>
+                            <div class="w-full bg-gray-200 rounded-full h-2 mb-4">
+                                <div class="bg-blue-500 h-2 rounded-full" style="width: 35%"></div>
+                            </div>
+                            <div class="flex justify-between mb-2">
+                                <span class="text-gray-600">RAM</span>
+                                <span class="font-medium">58%</span>
+                            </div>
+                            <div class="w-full bg-gray-200 rounded-full h-2 mb-4">
+                                <div class="bg-purple-500 h-2 rounded-full" style="width: 58%"></div>
+                            </div>
+                            <div class="flex justify-between mb-2">
+                                <span class="text-gray-600">Диск</span>
+                                <span class="font-medium">42%</span>
+                            </div>
+                            <div class="w-full bg-gray-200 rounded-full h-2">
+                                <div class="bg-yellow-500 h-2 rounded-full" style="width: 42%"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Server Card 2 (with warning) -->
+                    <div class="server-card bg-white rounded-xl shadow-md overflow-hidden transition-all duration-300 border-l-4 border-yellow-500">
+                        <div class="p-6">
+                            <div class="flex justify-between items-start mb-4">
+                                <div>
+                                    <h3 class="font-bold text-lg">База данных #2</h3>
+                                    <p class="text-gray-500 text-sm">192.168.1.22</p>
+                                </div>
+                                <span class="bg-yellow-100 text-yellow-800 text-xs px-2 py-1 rounded-full">High Load</span>
+                            </div>
+                            <div class="flex justify-between mb-2">
+                                <span class="text-gray-600">CPU</span>
+                                <span class="font-medium">89%</span>
+                            </div>
+                            <div class="w-full bg-gray-200 rounded-full h-2 mb-4">
+                                <div class="bg-red-500 h-2 rounded-full" style="width: 89%"></div>
+                            </div>
+                            <div class="flex justify-between mb-2">
+                                <span class="text-gray-600">RAM</span>
+                                <span class="font-medium">76%</span>
+                            </div>
+                            <div class="w-full bg-gray-200 rounded-full h-2 mb-4">
+                                <div class="bg-red-500 h-2 rounded-full" style="width: 76%"></div>
+                            </div>
+                            <div class="flex justify-between mb-2">
+                                <span class="text-gray-600">Диск</span>
+                                <span class="font-medium">65%</span>
+                            </div>
+                            <div class="w-full bg-gray-200 rounded-full h-2">
+                                <div class="bg-yellow-500 h-2 rounded-full" style="width: 65%"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Server Card 3 -->
+                    <div class="server-card bg-white rounded-xl shadow-md overflow-hidden transition-all duration-300">
+                        <div class="p-6">
+                            <div class="flex justify-between items-start mb-4">
+                                <div>
+                                    <h3 class="font-bold text-lg">Файловый сервер</h3>
+                                    <p class="text-gray-500 text-sm">192.168.1.33</p>
+                                </div>
+                                <span class="bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full">Online</span>
+                            </div>
+                            <div class="flex justify-between mb-2">
+                                <span class="text-gray-600">CPU</span>
+                                <span class="font-medium">28%</span>
+                            </div>
+                            <div class="w-full bg-gray-200 rounded-full h-2 mb-4">
+                                <div class="bg-blue-500 h-2 rounded-full" style="width: 28%"></div>
+                            </div>
+                            <div class="flex justify-between mb-2">
+                                <span class="text-gray-600">RAM</span>
+                                <span class="font-medium">34%</span>
+                            </div>
+                            <div class="w-full bg-gray-200 rounded-full h-2 mb-4">
+                                <div class="bg-purple-500 h-2 rounded-full" style="width: 34%"></div>
+                            </div>
+                            <div class="flex justify-between mb-2">
+                                <span class="text-gray-600">Диск</span>
+                                <span class="font-medium">78%</span>
+                            </div>
+                            <div class="w-full bg-gray-200 rounded-full h-2">
+                                <div class="bg-yellow-500 h-2 rounded-full" style="width: 78%"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Charts Section -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+                <!-- CPU Usage Chart -->
+                <div class="bg-white rounded-xl shadow-md p-6">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="font-semibold text-lg flex items-center">
+                            <i class="fas fa-microchip text-blue-500 mr-2"></i> Использование CPU
+                        </h3>
+                        <div class="flex space-x-2">
+                            <button class="time-btn active bg-blue-100 text-blue-600 px-3 py-1 rounded-lg text-sm" data-range="24">24ч</button>
+                            <button class="time-btn bg-gray-100 text-gray-600 px-3 py-1 rounded-lg text-sm" data-range="7">7д</button>
+                            <button class="time-btn bg-gray-100 text-gray-600 px-3 py-1 rounded-lg text-sm" data-range="30">30д</button>
+                        </div>
+                    </div>
+                    <div class="h-64">
+                        <canvas id="cpuChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- Memory Usage Chart -->
+                <div class="bg-white rounded-xl shadow-md p-6">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="font-semibold text-lg flex items-center">
+                            <i class="fas fa-memory text-purple-500 mr-2"></i> Использование памяти
+                        </h3>
+                        <div class="flex space-x-2">
+                            <button class="time-btn active bg-purple-100 text-purple-600 px-3 py-1 rounded-lg text-sm" data-range="24">24ч</button>
+                            <button class="time-btn bg-gray-100 text-gray-600 px-3 py-1 rounded-lg text-sm" data-range="7">7д</button>
+                            <button class="time-btn bg-gray-100 text-gray-600 px-3 py-1 rounded-lg text-sm" data-range="30">30д</button>
+                        </div>
+                    </div>
+                    <div class="h-64">
+                        <canvas id="memoryChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Alerts Section -->
+            <div class="bg-white rounded-xl shadow-md p-6 mb-8">
+                <h3 class="font-semibold text-lg mb-4 flex items-center">
+                    <i class="fas fa-exclamation-triangle text-red-500 mr-2"></i> Активные предупреждения
+                </h3>
+                <div class="space-y-3">
+                    <div class="flex items-start p-3 bg-red-50 rounded-lg">
+                        <div class="mr-3 mt-1">
+                            <i class="fas fa-exclamation-circle text-red-500"></i>
+                        </div>
+                        <div>
+                            <p class="font-medium">Высокая загрузка CPU на сервере БД #2 (89%)</p>
+                            <p class="text-sm text-gray-600">Обнаружено в 14:32, рекомендуется оптимизировать запросы</p>
+                        </div>
+                    </div>
+                    <div class="flex items-start p-3 bg-yellow-50 rounded-lg">
+                        <div class="mr-3 mt-1">
+                            <i class="fas fa-exclamation-circle text-yellow-500"></i>
+                        </div>
+                        <div>
+                            <p class="font-medium">Заканчивается место на файловом сервере (78%)</p>
+                            <p class="text-sm text-gray-600">Обнаружено в 10:15, рекомендуется очистить старые файлы</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <!-- Footer -->
+        <footer class="gradient-bg text-white py-6">
+            <div class="container mx-auto px-4">
+                <div class="flex flex-col md:flex-row justify-between items-center">
+                    <div class="mb-4 md:mb-0">
+                        <p class="text-sm">© 2023 Система мониторинга серверов</p>
+                    </div>
+                    <div class="flex space-x-4">
+                        <a href="#" class="text-white hover:text-blue-200"><i class="fab fa-github"></i></a>
+                        <a href="#" class="text-white hover:text-blue-200"><i class="fab fa-twitter"></i></a>
+                        <a href="#" class="text-white hover:text-blue-200"><i class="fab fa-linkedin"></i></a>
+                    </div>
+                </div>
+            </div>
+        </footer>
+    </div>
+
+    <script>
+        // Update time
+        function updateTime() {
+            const now = new Date();
+            const options = { 
+                year: 'numeric', 
+                month: 'long', 
+                day: 'numeric', 
+                hour: '2-digit', 
+                minute: '2-digit',
+                second: '2-digit'
+            };
+            document.getElementById('update-time').textContent = now.toLocaleDateString('ru-RU', options);
+        }
+        updateTime();
+        setInterval(updateTime, 1000);
+
+        // Refresh button
+        document.getElementById('refresh-btn').addEventListener('click', function() {
+            this.classList.add('animate-spin');
+            setTimeout(() => {
+                this.classList.remove('animate-spin');
+                updateTime();
+                // Here you would typically fetch new data
+            }, 1000);
+        });
+
+        // Time range buttons
+        document.querySelectorAll('.time-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                document.querySelectorAll('.time-btn').forEach(b => b.classList.remove('active', 'bg-blue-100', 'text-blue-600', 'bg-purple-100', 'text-purple-600'));
+                this.classList.add('active');
+                
+                if(this.closest('.bg-white').querySelector('h3').textContent.includes('CPU')) {
+                    this.classList.add('bg-blue-100', 'text-blue-600');
+                } else {
+                    this.classList.add('bg-purple-100', 'text-purple-600');
+                }
+                
+                // Here you would typically update charts based on selected time range
+            });
+        });
+
+        // Charts initialization
+        document.addEventListener('DOMContentLoaded', function() {
+            // CPU Chart
+            const cpuCtx = document.getElementById('cpuChart').getContext('2d');
+            const cpuChart = new Chart(cpuCtx, {
+                type: 'line',
+                data: {
+                    labels: Array.from({length: 24}, (_, i) => `${i}:00`),
+                    datasets: [{
+                        label: 'Средняя загрузка CPU',
+                        data: [30, 28, 25, 22, 20, 18, 20, 25, 35, 40, 45, 50, 
+                               55, 60, 58, 55, 50, 45, 40, 38, 35, 32, 30, 28],
+                        borderColor: '#3b82f6',
+                        backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                        borderWidth: 2,
+                        fill: true,
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            max: 100,
+                            ticks: {
+                                callback: function(value) {
+                                    return value + '%';
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+
+            // Memory Chart
+            const memoryCtx = document.getElementById('memoryChart').getContext('2d');
+            const memoryChart = new Chart(memoryCtx, {
+                type: 'line',
+                data: {
+                    labels: Array.from({length: 24}, (_, i) => `${i}:00`),
+                    datasets: [{
+                        label: 'Средняя загрузка памяти',
+                        data: [50, 48, 45, 43, 40, 38, 42, 48, 55, 60, 65, 68, 
+                               70, 72, 70, 68, 65, 62, 60, 58, 56, 54, 52, 50],
+                        borderColor: '#8b5cf6',
+                        backgroundColor: 'rgba(139, 92, 246, 0.1)',
+                        borderWidth: 2,
+                        fill: true,
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            max: 100,
+                            ticks: {
+                                callback: function(value) {
+                                    return value + '%';
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+
+            // Simulate real-time updates
+            setInterval(() => {
+                // Shift and add new data point
+                const cpuData = cpuChart.data.datasets[0].data;
+                const memoryData = memoryChart.data.datasets[0].data;
+                
+                cpuData.shift();
+                memoryData.shift();
+                
+                cpuData.push(Math.min(90, Math.max(20, cpuData[cpuData.length-1] + (Math.random() * 10 - 5))));
+                memoryData.push(Math.min(85, Math.max(30, memoryData[memoryData.length-1] + (Math.random() * 8 - 4))));
+                
+                cpuChart.update();
+                memoryChart.update();
+            }, 5000);
+        });
+    </script>
+</body>
+</html>

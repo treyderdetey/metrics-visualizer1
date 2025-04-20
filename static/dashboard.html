@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Мониторинг серверов</title>
+  <script src="https://unpkg.com/vue@3"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://kit.fontawesome.com/a2d9d6f5b9.js" crossorigin="anonymous"></script>
+  <style>
+    .mini-chart { height: 40px !important; }
+  </style>
+</head>
+<body class="bg-gray-50">
+  <div id="app" class="min-h-screen flex flex-col">
+    <!-- Header -->
+    <header class="bg-blue-600 text-white shadow-lg">
+      <div class="container mx-auto px-4 py-6">
+        <div class="flex justify-between items-center">
+          <div class="flex items-center space-x-4">
+            <i class="fas fa-server text-3xl"></i>
+            <h1 class="text-2xl font-bold">Мониторинг серверов</h1>
+          </div>
+          <div class="flex items-center space-x-4">
+            <span class="text-sm">Обновлено: <span id="update-time">—</span></span>
+            <img v-if="avatar" :src="avatar" class="w-8 h-8 rounded-full shadow" />
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <!-- Main -->
+    <main class="container mx-auto px-4 py-6 flex-1">
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+        <div class="bg-white rounded-xl shadow-md p-6 flex items-center">
+          <div class="bg-green-100 p-3 rounded-full mr-4">
+            <i class="fas fa-check-circle text-green-600 text-xl"></i>
+          </div>
+          <div>
+            <p class="text-gray-500 text-sm">Всего серверов</p>
+            <h3 class="text-2xl font-bold text-green-600">{{ Object.keys(servers).length }}</h3>
+          </div>
+        </div>
+      </div>
+
+      <!-- Серверы -->
+      <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+        <div v-for="(server, hostname) in servers" :key="hostname"
+          class="server-card bg-white rounded-xl shadow-md p-6 transition-all duration-300"
+          :class="getCardBorder(server)">
+          <div class="flex justify-between items-start mb-4">
+            <div>
+              <h3 class="font-bold text-lg truncate">{{ hostname }}</h3>
+              <p class="text-gray-500 text-sm">Uptime: {{ server.uptime }}</p>
+            </div>
+            <span class="text-xs px-2 py-1 rounded-full"
+              :class="getStatusBadge(server)">
+              {{ getStatusText(server) }}
+            </span>
+          </div>
+
+          <div class="mb-2">
+            <div class="flex justify-between text-sm">
+              <span>CPU</span>
+              <span>{{ server.cpu_usage.toFixed(0) }}%</span>
+            </div>
+            <div class="w-full bg-gray-200 rounded-full h-2">
+              <div class="h-2 rounded-full bg-blue-500" :style="{ width: server.cpu_usage + '%' }"></div>
+            </div>
+          </div>
+
+          <div class="mb-2">
+            <div class="flex justify-between text-sm">
+              <span>RAM</span>
+              <span>{{ server.memory_usage.toFixed(0) }}%</span>
+            </div>
+            <div class="w-full bg-gray-200 rounded-full h-2">
+              <div class="h-2 rounded-full bg-purple-500" :style="{ width: server.memory_usage + '%' }"></div>
+            </div>
+          </div>
+
+          <div class="mb-2">
+            <div class="flex justify-between text-sm">
+              <span>I/O</span>
+              <span>{{ server.disk_io }}</span>
+            </div>
+          </div>
+          <div class="mb-2">
+            <div class="flex justify-between text-sm">
+              <span>In</span>
+              <span>{{ server.network_in }}</span>
+            </div>
+          </div>
+          <div class="mb-2">
+            <div class="flex justify-between text-sm">
+              <span>Out</span>
+              <span>{{ server.network_out }}</span>
+            </div>
+          </div>
+
+          <canvas :id="'chart-' + hostname" class="mt-2 w-full mini-chart"></canvas>
+        </div>
+      </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-blue-600 text-white py-4 text-center text-sm">
+      © 2025 Система мониторинга серверов
+    </footer>
+  </div>
+
+  <script>
+    function updateTime() {
+      const now = new Date();
+      document.getElementById('update-time').textContent = now.toLocaleTimeString('ru-RU');
+    }
+    setInterval(updateTime, 1000);
+    updateTime();
+
+    const app = Vue.createApp({
+      data() {
+        return {
+          servers: {},
+          charts: {},
+          avatar: null
+        }
+      },
+      methods: {
+        getCardBorder(server) {
+          const cpu = server.cpu_usage;
+          const mem = server.memory_usage;
+          if (cpu > 80 || mem > 80) return 'border-l-4 border-red-500';
+          if (cpu > 50 || mem > 50) return 'border-l-4 border-yellow-500';
+          return 'border-l-4 border-green-500';
+        },
+        getStatusText(server) {
+          const cpu = server.cpu_usage;
+          if (cpu > 80) return 'High Load';
+          return 'Online';
+        },
+        getStatusBadge(server) {
+          const cpu = server.cpu_usage;
+          if (cpu > 80) return 'bg-red-100 text-red-700';
+          if (cpu > 50) return 'bg-yellow-100 text-yellow-700';
+          return 'bg-green-100 text-green-700';
+        },
+        initChart(hostname) {
+          const ctx = document.getElementById('chart-' + hostname);
+          const chart = new Chart(ctx, {
+            type: 'line',
+            data: {
+              labels: [],
+              datasets: [{
+                label: 'CPU %',
+                data: [],
+                borderColor: '#3b82f6',
+                backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                tension: 0.4,
+                borderWidth: 1,
+                fill: true,
+                pointRadius: 0
+              }]
+            },
+            options: {
+              responsive: true,
+              maintainAspectRatio: false,
+              scales: {
+                x: { display: false },
+                y: { display: false, min: 0, max: 100 }
+              },
+              plugins: {
+                legend: { display: false },
+                tooltip: { enabled: false }
+              }
+            }
+          });
+          this.charts[hostname] = chart;
+        },
+        updateChart(hostname, value) {
+          const chart = this.charts[hostname];
+          if (!chart) return;
+          const data = chart.data.datasets[0].data;
+          const labels = chart.data.labels;
+          data.push(value);
+          labels.push('');
+          if (data.length > 20) {
+            data.shift();
+            labels.shift();
+          }
+          chart.update();
+        }
+      },
+      mounted() {
+        const socket = new WebSocket("ws://" + location.host + "/ws");
+        socket.onmessage = (event) => {
+          const metric = JSON.parse(event.data);
+          const hostname = metric.hostname;
+          this.servers[hostname] = metric;
+          if (!this.charts[hostname]) {
+            this.$nextTick(() => {
+              this.initChart(hostname);
+              this.updateChart(hostname, metric.cpu_usage);
+            });
+          } else {
+            this.updateChart(hostname, metric.cpu_usage);
+          }
+        };
+        fetch('/api/userinfo')
+          .then(res => res.json())
+          .then(data => { this.avatar = data.avatar })
+          .catch(() => {});
+      }
+    });
+    app.mount('#app');
+  </script>
+</body>
+</html>
